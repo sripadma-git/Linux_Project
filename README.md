@@ -1,623 +1,518 @@
-# 🧹 Automated Log Cleanup — Linux & DevOps Project
+# 🐧 Linux Projects — DevOps & System Administration
 
-> **Automate repetitive Linux log maintenance using Bash scripting and Cron.**
+> A collection of practical Linux projects focused on automation, monitoring, troubleshooting, security, and system administration.
 
 ![Linux](https://img.shields.io/badge/Linux-Administration-black?logo=linux)
 ![Bash](https://img.shields.io/badge/Bash-Scripting-4EAA25?logo=gnubash\&logoColor=white)
-![Cron](https://img.shields.io/badge/Cron-Automation-blue)
 ![DevOps](https://img.shields.io/badge/DevOps-Automation-orange)
+![Projects](https://img.shields.io/badge/Projects-3-blue)
 
 ---
 
-## 📌 Project Overview
+# 📌 About This Repository
 
-Application servers continuously generate log files. Over time, old rotated logs can consume disk space and potentially cause disk-full problems.
+Linux is one of the most important foundations of Cloud and DevOps engineering.
 
-This project automates the cleanup of old application logs using:
+This repository contains hands-on Linux projects designed around common tasks that a Cloud/DevOps engineer or Linux administrator may perform on a server.
 
-* **Bash** — cleanup automation
-* **Cron** — scheduled execution
-* **Linux filesystem** — log management
-* **Logging** — execution history and error capture
+The projects focus on three important operational areas:
 
-The cleanup process removes only files ending in `.old` while preserving the active `app.log`.
+```text
+Automation
+    ↓
+Monitoring & Incident Response
+    ↓
+Security & Access Control
+```
+
+Each project starts with a real-world operational problem and solves it using standard Linux tools and Bash scripting.
 
 ---
 
-## 🎯 Problem Statement
+# 📂 Projects
 
-The application server stores logs in:
+| #  | Project                                                    | Main Focus                   | Tools                              |
+| -- | ---------------------------------------------------------- | ---------------------------- | ---------------------------------- |
+| 01 | 🧹 [Automated Log Cleanup](./automated-log-cleanup/)       | Automation & Log Management  | Bash, Cron                         |
+| 02 | 🚨 [Incident Health Snapshot](./incident-health-snapshot/) | Monitoring & Troubleshooting | Bash, uptime, free, ps, df, du, ss |
+| 03 | 🔐 [Linux Security Hardening](./linux-security-hardening/) | Permissions & Shell Security | Bash, chmod, SSH, PATH             |
+
+---
+
+# 01. 🧹 Automated Log Cleanup
+
+### What does it do?
+
+Application servers continuously generate log files.
+
+For example:
 
 ```text
 /var/log/escbash-app/
-```
 
-Example:
-
-```text
 app.log
 app.log.1.old
 app.log.2.old
 app.log.3.old
 ```
 
-The problem is that old `.old` log files accumulate over time and consume disk space.
+The current `app.log` must remain available, while old rotated `.old` files can eventually consume disk space.
 
-Manually deleting these files is:
-
-* Repetitive
-* Error-prone
-* Easy to forget
-* Not scalable
-
-### Objective
-
-Build an automated process that:
-
-1. Identifies old `.old` log files.
-2. Deletes only those files.
-3. Preserves the active `app.log`.
-4. Runs automatically using Cron.
-5. Records every execution.
-6. Can also be executed manually when required.
-
----
-
-# 🏗️ Architecture
+This project creates a Bash script that:
 
 ```text
-                 Linux Application Server
-                         │
-                         ▼
-              /var/log/escbash-app/
-                         │
-              ┌──────────┴──────────┐
-              │                     │
-          app.log              *.old files
-        (KEEP)                  (DELETE)
-                                  │
-                                  ▼
-                         cleanup.sh
-                                  │
-                                  ▼
-                            Cron Scheduler
-                                  │
-                                  ▼
-                         cleanup.log
+Find old logs
+     ↓
+Delete *.old
+     ↓
+Preserve app.log
+     ↓
+Record execution
 ```
 
----
+The cleanup is then scheduled using **Cron** so that it runs automatically.
 
-# 🔄 How It Works
+### Technologies
 
 ```text
+Linux
+Bash
 Cron
-  │
-  │ Scheduled execution
-  ▼
-cleanup.sh
-  │
-  ├── Find *.old
-  │
-  ├── Delete old rotated logs
-  │
-  └── Print execution message
-          │
-          ▼
-     cleanup.log
+File management
+Log management
 ```
 
-The active:
+### Why is it important?
+
+Servers can generate thousands of log files over time.
+
+If disk space reaches 100%:
 
 ```text
-app.log
+Disk fills
+    ↓
+Applications may fail
+    ↓
+Services may stop
+    ↓
+Production incident
 ```
 
-is never targeted by the cleanup pattern.
-
----
-
-# 📁 Project Structure
-
-```text
-automated-log-cleanup/
-│
-├── README.md
-├── cleanup.sh
-├── setup.sh
-├── cron-example.txt
-│
-└── screenshots/
-    ├── before-cleanup.png
-    ├── after-cleanup.png
-    └── cron-log.png
-```
-
----
-
-# 🛠️ Technologies Used
-
-| Technology | Purpose                            |
-| ---------- | ---------------------------------- |
-| Linux      | Operating system environment       |
-| Bash       | Automation script                  |
-| Cron       | Job scheduling                     |
-| `rm`       | Removing old log files             |
-| `echo`     | Printing execution status          |
-| `chmod`    | Making the script executable       |
-| `>>`       | Appending output to a log          |
-| `2>&1`     | Redirecting errors to the same log |
-
----
-
-# ⚙️ Setup
-
-## 1. Create the application log directory
-
-```bash
-sudo mkdir -p /var/log/escbash-app
-```
-
-## 2. Create sample logs
-
-```bash
-echo "service started" | sudo tee /var/log/escbash-app/app.log
-
-echo "old entries" | sudo tee /var/log/escbash-app/app.log.1.old
-echo "old entries" | sudo tee /var/log/escbash-app/app.log.2.old
-echo "old entries" | sudo tee /var/log/escbash-app/app.log.3.old
-```
-
-Check the files:
-
-```bash
-ls -lh /var/log/escbash-app/
-```
-
-Expected:
-
-```text
-app.log
-app.log.1.old
-app.log.2.old
-app.log.3.old
-```
-
----
-
-# 📝 Cleanup Script
-
-Create the script:
-
-```bash
-sudo mkdir -p /root/bin
-sudo nano /root/bin/cleanup.sh
-```
-
-Add:
-
-```bash
-#!/bin/bash
-
-rm -f /var/log/escbash-app/*.old
-
-echo "Log cleanup completed"
-```
-
-Make it executable:
-
-```bash
-sudo chmod +x /root/bin/cleanup.sh
-```
-
----
-
-# 🧪 Test the Script
-
-Run it manually:
-
-```bash
-sudo /root/bin/cleanup.sh
-```
-
-Expected output:
-
-```text
-Log cleanup completed
-```
-
-Check the directory:
-
-```bash
-ls -lh /var/log/escbash-app/
-```
-
-Expected:
-
-```text
-app.log
-```
-
-The `.old` files should no longer exist.
-
----
-
-# ⏰ Cron Automation
-
-Create the cleanup log:
-
-```bash
-sudo touch /var/log/escbash-app/cleanup.log
-```
-
-Open root's crontab:
-
-```bash
-sudo crontab -e
-```
-
-Add:
-
-```cron
-0 0 * * * /root/bin/cleanup.sh >> /var/log/escbash-app/cleanup.log 2>&1
-```
-
-This runs the cleanup script **every day at midnight**.
-
----
-
-# 🔍 Understanding the Cron Entry
-
-```cron
-0 0 * * * /root/bin/cleanup.sh >> /var/log/escbash-app/cleanup.log 2>&1
-```
-
-| Part                   | Meaning                     |
-| ---------------------- | --------------------------- |
-| `0`                    | Minute                      |
-| `0`                    | Hour                        |
-| `*`                    | Every day of month          |
-| `*`                    | Every month                 |
-| `*`                    | Every day of week           |
-| `/root/bin/cleanup.sh` | Script to execute           |
-| `>>`                   | Append output               |
-| `cleanup.log`          | Execution log               |
-| `2>&1`                 | Send errors to the same log |
-
-### Schedule
-
-```text
-0 0 * * *
-│ │ │ │ │
-│ │ │ │ └── Day of week
-│ │ │ └──── Month
-│ │ └────── Day of month
-│ └──────── Hour
-└────────── Minute
-```
-
-Therefore:
-
-```text
-0 0 * * *
-```
-
-means:
-
-> Run every day at 00:00.
-
----
-
-# 📊 Verify Cron
-
-Check the configured Cron jobs:
-
-```bash
-sudo crontab -l
-```
-
-You should see:
-
-```cron
-0 0 * * * /root/bin/cleanup.sh >> /var/log/escbash-app/cleanup.log 2>&1
-```
-
----
-
-# 📜 Check Cleanup History
-
-After the script runs:
-
-```bash
-cat /var/log/escbash-app/cleanup.log
-```
-
-Example:
-
-```text
-Log cleanup completed
-Log cleanup completed
-Log cleanup completed
-```
-
-This provides a basic execution history.
-
----
-
-# 🔐 Safety Considerations
-
-The script deliberately targets:
-
-```bash
-/var/log/escbash-app/*.old
-```
-
-instead of deleting everything:
-
-```bash
-rm -rf /var/log/escbash-app/*
-```
-
-This is important because:
-
-```text
-*.old     → delete
-app.log   → preserve
-cleanup.log → preserve
-```
-
-The cleanup operation is therefore scoped to the intended rotated log files.
-
----
-
-# 🧠 DevOps Concepts Demonstrated
-
-This project demonstrates several practical Linux/DevOps concepts:
-
-### Linux Administration
-
-* Filesystem management
-* `/var/log`
-* File permissions
-* Executable scripts
-* Root privileges
-
-### Bash Scripting
-
-* Shebang
-* Commands
-* Wildcards
-* File deletion
-* Exit/output handling
-
-### Automation
-
-* Cron jobs
-* Scheduled maintenance
-* Repetitive task automation
-
-### Logging
-
-* Standard output redirection
+Automating log cleanup reduces repetitive manual work and helps prevent avoidable disk-space problems.
+
+### Key concepts learned
+
+* Bash scripting
+* File wildcards
+* `rm`
+* Cron scheduling
+* Output redirection
 * Error redirection
-* Persistent execution logs
+* Linux log management
+* Automation
 
-### Operational Thinking
+### Project
 
-The key DevOps principle demonstrated here is:
-
-> **Automate repetitive operational tasks instead of relying on manual intervention.**
+👉 [View Automated Log Cleanup](./automated-log-cleanup/)
 
 ---
 
-# 🚀 Possible Production Improvements
+# 02. 🚨 Incident Health Snapshot
 
-This project intentionally keeps the implementation simple, but a production environment could improve it further.
+### What does it do?
 
-### 1. Delete based on file age
+When a production server becomes slow, an engineer first needs to understand the current state of the machine.
 
-Instead of deleting every `.old` file:
+Instead of manually running several commands, this project collects important system information into:
 
-```bash
-find /var/log/escbash-app/ -name "*.old" -type f -mtime +7 -delete
+```text
+/root/health-report.txt
 ```
 
-This would delete `.old` files older than 7 days.
+The report contains:
 
-### 2. Add timestamps
+```text
+Uptime & Load
+      ↓
+Memory
+      ↓
+Running Processes
+      ↓
+Filesystem Usage
+      ↓
+Largest /var Directories
+      ↓
+Listening Network Ports
+```
+
+### Technologies
+
+```text
+Linux
+Bash
+System monitoring
+Disk analysis
+Network inspection
+```
+
+### Commands used
+
+```bash
+uptime
+free -h
+ps aux
+df -h
+du
+sort
+ss -tlnp
+```
+
+### Why is it important?
+
+During an incident, changing the server immediately can destroy useful evidence.
+
+A better approach is:
+
+```text
+🚨 Alert
+   ↓
+📋 Capture current state
+   ↓
+🔎 Investigate
+   ↓
+🛠️ Remediate
+   ↓
+✅ Verify
+```
+
+The health snapshot provides a baseline of the server at the moment the incident occurs.
+
+For example, it can help answer:
+
+* Is the system under high load?
+* Is memory running low?
+* Which processes are consuming resources?
+* Is a filesystem nearly full?
+* Which `/var` directories are large?
+* Which services are listening on network ports?
+
+### Key concepts learned
+
+* Linux system monitoring
+* CPU/load analysis
+* Memory monitoring
+* Process inspection
+* Disk usage analysis
+* Network socket inspection
+* Bash automation
+* Incident-response fundamentals
+
+### Project
+
+👉 [View Incident Health Snapshot](./incident-health-snapshot/)
+
+---
+
+# 03. 🔐 Linux Security Hardening
+
+### What does it do?
+
+This project starts with a Linux server containing several security and configuration problems:
+
+```text
+Secrets readable by everyone
+        ↓
+SSH directory too permissive
+        ↓
+Private key readable by others
+        ↓
+Deployment helper requires full path
+        ↓
+No convenient deploy command
+```
+
+The project fixes these issues using Linux permissions, PATH configuration, symlinks, and Bash aliases.
+
+### Permissions
+
+Sensitive files are restricted:
+
+```text
+secrets.env → 600
+.ssh        → 700
+id_rsa      → 600
+id_rsa.pub  → 644
+```
+
+### Deployment helper
 
 Instead of:
 
 ```bash
-echo "Log cleanup completed"
+/root/tools/deploy-helper.sh
 ```
 
-use:
+the helper can be executed as:
 
 ```bash
-echo "$(date '+%Y-%m-%d %H:%M:%S') - Log cleanup completed"
+deploy-helper
 ```
 
-Example:
+And an alias provides:
+
+```bash
+deploy
+```
+
+### Technologies
 
 ```text
-2026-09-17 00:00:00 - Log cleanup completed
+Linux permissions
+Bash
+SSH
+chmod
+PATH
+Symlinks
+Bash aliases
 ```
 
-### 3. Add error handling
+### Why is it important?
 
-A production script could check whether the log directory exists before attempting cleanup.
+Security problems often begin with excessive permissions.
 
-### 4. Use `logrotate`
+For example:
 
-For real production log management, Linux's `logrotate` is often more appropriate than manually deleting rotated logs.
+```text
+Private SSH key
+      ↓
+Should only be accessible by its owner
+```
+
+Giving unnecessary access to secrets or private keys can expose credentials and potentially allow unauthorized access.
+
+This project demonstrates the **principle of least privilege**:
+
+> Give users and processes only the permissions they actually need.
+
+### Key concepts learned
+
+* Linux file permissions
+* `chmod`
+* SSH key security
+* File ownership
+* PATH configuration
+* Symbolic links
+* `.bashrc`
+* Bash aliases
+* Least privilege
+
+### Project
+
+👉 [View Linux Security Hardening](./linux-security-hardening/)
 
 ---
 
-# 🧪 Validation Checklist
+# 🔄 How These Projects Connect
 
-After implementation, verify:
-
-```text
-☑ cleanup.sh exists
-☑ cleanup.sh is executable
-☑ *.old files are deleted
-☑ app.log remains
-☑ cleanup.log exists
-☑ Cron job is configured
-☑ Script output is recorded
-☑ Script can be executed manually
-```
-
-Useful commands:
-
-```bash
-ls -l /root/bin/cleanup.sh
-```
-
-```bash
-ls -lh /var/log/escbash-app/
-```
-
-```bash
-sudo crontab -l
-```
-
-```bash
-cat /var/log/escbash-app/cleanup.log
-```
-
----
-
-# 📸 Project Evidence
-
-Add screenshots demonstrating the project working.
-
-Recommended screenshots:
-
-### 1. Before Cleanup
-
-Show:
+These three projects represent different stages of Linux/DevOps operations.
 
 ```text
-app.log
-app.log.1.old
-app.log.2.old
-app.log.3.old
+                    LINUX SERVER
+                         │
+          ┌──────────────┼──────────────┐
+          │              │              │
+          ▼              ▼              ▼
+      AUTOMATE        MONITOR         SECURE
+          │              │              │
+          ▼              ▼              ▼
+    Log Cleanup     Health Report    Permissions
+          │              │              │
+          ▼              ▼              ▼
+        Cron       Incident Response   SSH/PATH
 ```
 
-### 2. Script Execution
+Together, they cover three fundamental operational responsibilities:
 
-Show:
+### 1. Automate
 
-```bash
-sudo /root/bin/cleanup.sh
-```
-
-and:
+Don't repeatedly perform the same operational task manually.
 
 ```text
-Log cleanup completed
+Bash + Cron
 ```
 
-### 3. After Cleanup
+### 2. Observe
 
-Show that only:
+Before troubleshooting, understand the current state of the system.
 
 ```text
-app.log
-cleanup.log
+uptime + free + ps + df + du + ss
 ```
 
-remain.
+### 3. Secure
 
-### 4. Cron Configuration
+Restrict sensitive resources and follow least-privilege principles.
 
-Show:
-
-```bash
-sudo crontab -l
-```
-
-with the scheduled job.
-
-### 5. Cleanup Log
-
-Show:
-
-```bash
-cat /var/log/escbash-app/cleanup.log
+```text
+chmod + SSH + PATH + .bashrc
 ```
 
 ---
 
-# 📈 Future Enhancements
+# 🎯 Why These Projects Matter for DevOps
 
-This project can be extended into a more production-oriented log management solution:
+A DevOps engineer isn't only expected to know cloud services and CI/CD.
 
-* [ ] Delete logs based on age
-* [ ] Compress old logs using `gzip`
-* [ ] Monitor disk usage
-* [ ] Send alerts when disk usage exceeds a threshold
-* [ ] Add structured logging
-* [ ] Add error handling
-* [ ] Add Bash exit codes
-* [ ] Integrate with Prometheus/Grafana
-* [ ] Run the cleanup using a `systemd` timer
-* [ ] Containerize the demonstration environment
+Strong Linux fundamentals are required to troubleshoot and operate servers effectively.
+
+These projects demonstrate practical knowledge of:
+
+```text
+Linux
+  │
+  ├── Files & Permissions
+  │
+  ├── Processes
+  │
+  ├── Memory
+  │
+  ├── Disk
+  │
+  ├── Networking
+  │
+  ├── Bash
+  │
+  ├── Automation
+  │
+  ├── Cron
+  │
+  └── Security
+```
+
+These fundamentals transfer directly into environments involving:
+
+```text
+AWS
+Docker
+Kubernetes
+CI/CD
+Terraform
+Jenkins
+Monitoring
+Production Operations
+```
 
 ---
 
-# 🎓 What I Learned
+# 📈 Skills Demonstrated
 
-Through this project, I practiced:
+### Linux Administration
 
-* Linux filesystem management
-* Bash scripting
-* File permissions
-* Cron scheduling
+* Filesystem management
+* Permissions
+* Processes
+* Memory
+* Disk
+* Networking
+
+### Bash
+
+* Shell scripting
+* Variables
+* Command execution
 * Output redirection
-* Error redirection
-* Log management
-* Linux automation
-* Basic operational reliability practices
+* File operations
+* Automation
+
+### DevOps
+
+* Operational automation
+* Scheduled jobs
+* Incident response
+* System monitoring
+* Troubleshooting
+* Security hardening
+
+### Security
+
+* Least privilege
+* SSH key protection
+* Sensitive file protection
+* Shell configuration
 
 ---
 
-# 💼 Resume Relevance
+# 🧠 Learning Approach
 
-**Automated Log Cleanup — Linux/Bash**
-
-> Developed a Bash-based automated log cleanup solution using Cron to remove obsolete rotated logs while preserving active application logs; implemented execution logging and scheduled maintenance to reduce manual operational overhead.
-
----
-
-## ⭐ Key Takeaway
-
-The project is based on a simple operational workflow:
+Each project follows the same operational thinking:
 
 ```text
-IDENTIFY
-   ↓
-Old logs consuming disk space
-   ↓
-AUTOMATE
-   ↓
-Bash cleanup script
-   ↓
-SCHEDULE
-   ↓
-Cron
-   ↓
-OBSERVE
-   ↓
-cleanup.log
-   ↓
-REDUCE
-   ↓
-Manual operational effort
+1. Identify the problem
+        ↓
+2. Understand the Linux system
+        ↓
+3. Choose the appropriate command/tool
+        ↓
+4. Automate repetitive work
+        ↓
+5. Verify the result
+        ↓
+6. Document the solution
 ```
 
-**This is a small project, but it demonstrates an important DevOps principle:**
+The goal is not simply to memorize Linux commands.
 
-> **If a task is predictable, repetitive, and operationally necessary, automate it.**
+The goal is to understand:
+
+> **What problem am I solving, which Linux tool solves it, and how can I make the solution reliable and repeatable?**
+
+---
+
+# 🚀 Future Projects
+
+More Linux/DevOps projects will be added to this repository.
+
+Planned projects include:
+
+* [ ] Disk Usage Monitoring
+* [ ] Service Health Checker
+* [ ] Automated Backup
+* [ ] CPU & Memory Monitoring
+* [ ] Linux User Management
+* [ ] Nginx Deployment Automation
+* [ ] Server Log Analyzer
+* [ ] Systemd Service Management
+* [ ] Network Troubleshooting Toolkit
+* [ ] Automated Server Provisioning
+
+---
+
+# 📚 Repository Goal
+
+The goal of this repository is to build practical Linux skills through small, realistic engineering problems.
+
+Rather than only learning commands theoretically, each project focuses on:
+
+```text
+Problem
+   ↓
+Implementation
+   ↓
+Automation
+   ↓
+Verification
+   ↓
+Documentation
+```
+
+---
+
+## 👨‍💻 Author
+
+**Sri Padma Chinta**
+
+Cloud & DevOps Engineer | Linux | AWS | Docker | Kubernetes | Terraform | CI/CD
+
+---
+
+⭐ If you find this repository useful, consider giving it a star.
